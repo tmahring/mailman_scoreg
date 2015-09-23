@@ -1,0 +1,16 @@
+{
+  "name": "mailman_scoreg",
+  "version": "1.0.0",
+  "description": "Update mailman list members based on scoreg jobs",
+  "main": "app.js",
+  "dependencies": {
+    "request": "^2.63.0",
+    "sqlite3": "^3.1.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Thomas Mahringer",
+  "license": "ISC"
+}
