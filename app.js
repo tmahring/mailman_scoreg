@@ -1,69 +1,54 @@
 "use strict";
-var request = require('request');
-var settings = require('./settings.js');
+var scoreg = require('./scoreg.js');
+var database = require('./database.js');
+var mailman = require('./mailman.js');
 
-function jobIsActive(job) {
-  var nowDate = new Date();
-  if(job.startDate) {
-    var startDate = new Date(job.startDate);
-    if(startDate > nowDate) {
-      return false;
-    }
-  }
-  if(job.endDate) {
-    var endDate = new Date(job.endDate);
-    if(endDate < nowDate) {
-      return false;
-    }
-  }
-  return true;
+var subscriptions = [];
+
+function allLoaded() {
+  console.log('Loaded ' + subscriptions.length + ' subscriptions');
+  console.log(subscriptions);
 }
 
-function processMember(scoutId) {
-  request({
-    url: settings.apiBaseUrl + '/member/findMemberCompleteByScoutId/' + settings.apiUser + '/' + settings.apiPassword + '/' + settings.apiAuthOrgId + '/' + settings.apiServiceId + '/' + scoutId,
-    json: true,
-  }, function(error, response, body) {
-    if(error) {
-      console.log(error);
-      return;
-    }
-    if(!body.MemberComplete) {
-      return;
-    }
+scoreg.loadMembers(function(scoutIds) {
+  var membersDone = 0;
+  var running = 0;
+  var limit = 10;
+  var current = 0;
 
-    if(body.MemberComplete.memberJobList && body.MemberComplete.memberJobList.memberJob) {
-      var memberData = {
-        firstName : body.MemberComplete.firstname ? body.MemberComplete.firstname : '',
-        lastName: body.MemberComplete.lastname ? body.MemberComplete.lastname : '',
-        email: body.MemberComplete.emailPrimary ? body.MemberComplete.emailPrimary : '',
-        scoutState: body.MemberComplete.scoutState ? body.MemberComplete.scoutState : '',
-        jobs: [],
-      };
-
-      for(var i = 0; i < body.MemberComplete.memberJobList.memberJob.length; i++) {
-        var job = body.MemberComplete.memberJobList.memberJob[i];
-        if(jobIsActive(job)) {
-          memberData.jobs.push(job.jobName);
+  function loadMemberJobs(scoutId) {
+    scoreg.loadMemberData(scoutId, function(memberData) {
+      if(memberData.memberJobList && memberData.memberJobList.memberJob && memberData.scoutState === 'MEMBER_FULL' && memberData.emailPrimary && memberData.emailPrimary !== '') {
+        var memberJobs = scoreg.getActiveMemberJobs(memberData);
+        if(memberJobs.length > 0) {
+          var memberLists = mailman.getListsByJobs(memberJobs);
+          if(memberLists.length > 0) {
+            subscriptions.push({
+              scoutId : scoutId,
+              email: memberData.emailPrimary,
+              lists: memberLists,
+            });
+          }
         }
       }
-
-      if(memberData.jobs.length > 0 && memberData.scoutState === 'MEMBER_FULL') {
-        console.log(memberData);
+      membersDone++;
+      running--;
+      if(membersDone === scoutIds.length) {
+        allLoaded();
       }
-    }
-  });
-}
+      else {
+        runRequests();
+      }
+    });
+  }
 
-request({
-  url: settings.apiBaseUrl + '/member/findScoutIdsForOrganization/' + settings.apiUser + '/' + settings.apiPassword + '/' + settings.apiAuthOrgId + '/' + settings.apiServiceId + '/' + settings.apiAuthOrgId,
-  json: true,
-}, function(error, response, body) {
-  if(error) {
-    console.log(error);
-    return;
+  function runRequests() {
+    while(running < limit && current < scoutIds.length) {
+      loadMemberJobs(scoutIds[current]);
+      running++;
+      current++;
+    }
   }
-  for(var i = 0; i < body.ScoutIdList.list.length; i++) {
-    processMember(body.ScoutIdList.list[i]);
-  }
+
+  runRequests();
 });
