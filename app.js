@@ -6,8 +6,23 @@ var mailman = require('./mailman.js');
 var subscriptions = [];
 
 function allLoaded() {
-  console.log('Loaded ' + subscriptions.length + ' subscriptions');
-  console.log(subscriptions);
+  console.log('Loaded ' + subscriptions.length + ' subscriptions from scoreg');
+
+  database.compileChanges(subscriptions, function(changes) {
+    changes.forEach(function(change){
+      switch(change.action) {
+        case 'subscribe' :
+          mailman.addAddressToList(change.list, change.email);
+          break;
+        case 'unsubscribe' :
+          mailman.removeAddressFromList(change.list, change.email);
+          break;
+        case 'update':
+          mailman.updateAddress(change.list, change.oldmail, change.newmail);
+          break;
+      }
+    });
+  });
 }
 
 scoreg.loadMembers(function(scoutIds) {
