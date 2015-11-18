@@ -36,8 +36,7 @@ function allLoaded() {
 
   database.compileChanges(subscriptions, function(changes) {
     var curChange = 0;
-    function applyNextChange(retval) {
-      console.log('action:' + changes[curChange].action + ' list:' + changes[curChange].list + ' addr:' + changes[curChange].email);
+    function applyNextChange(retval) {      
       if(retval !== 0) {
         console.log('ERROR: Mailman returned ' + retval);
       }
