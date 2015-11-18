@@ -1,3 +1,27 @@
+/**
+ * @file
+ * Interface to Scoreg rest api
+ *
+ * @author
+ * Thomas Mahringer (tmahring@tmweb.at)
+ *
+ * @copyright
+ * Copyright (c) 2015, Landesverband der Steirischen Pfadfinder und
+ * Pfadfinderinnen, Dominikanergasse 8, 8020 Graz. All rights reserved.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 'use strict';
 
 module.exports = (function() {
@@ -6,7 +30,10 @@ module.exports = (function() {
 
   var loadMembers = function(callback) {
     request({
-      url: settings.api.baseUrl + '/member/findScoutIdsForOrganization/' + settings.api.user + '/' + settings.api.password + '/' + settings.api.authOrgId + '/' + settings.api.serviceId + '/' + settings.api.authOrgId,
+      url: settings.api.baseUrl + '/member/findScoutIdsForOrganization/' +
+        settings.api.user + '/' + settings.api.password + '/' +
+        settings.api.authOrgId + '/' + settings.api.serviceId + '/' +
+        settings.api.authOrgId,
       json: true,
     }, function(error, response, body) {
       if(error) {
@@ -20,7 +47,9 @@ module.exports = (function() {
 
   var loadMemberData = function(scoutId, callback) {
     request({
-      url: settings.api.baseUrl + '/member/findMemberCompleteByScoutId/' + settings.api.user + '/' + settings.api.password + '/' + settings.api.authOrgId + '/' + settings.api.serviceId + '/' + scoutId,
+      url: settings.api.baseUrl + '/member/findMemberCompleteByScoutId/' +
+        settings.api.user + '/' + settings.api.password + '/' +
+        settings.api.authOrgId + '/' + settings.api.serviceId + '/' + scoutId,
       json: true,
     }, function(error, response, body) {
       if(error) {

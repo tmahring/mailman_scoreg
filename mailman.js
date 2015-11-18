@@ -3,10 +3,11 @@
  * Interface functions to mailman console interface, parser for scoreg jobs
  *
  * @author
- * Thomas Mahringer
+ * Thomas Mahringer (tmahring@tmweb.at)
  *
  * @copyright
- * Copyright (c) 2015, Thomas Mahringer. All rights reserved.
+ * Copyright (c) 2015, Landesverband der Steirischen Pfadfinder und
+ * Pfadfinderinnen, Dominikanergasse 8, 8020 Graz. All rights reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -45,6 +46,7 @@ module.exports = (function() {
    * @param {mailmanCallback} callback
    */
   var addAddressToList = function(list, address, callback) {
+    console.log('running /usr/lib/mailman/bin/add_members' + '-r' + '-' + list);
     var mm = child.spawn('/usr/lib/mailman/bin/add_members', ['-r', '-', list]);
     mm.stdout.pipe(process.stdout);
     mm.stderr.pipe(process.stdout);
