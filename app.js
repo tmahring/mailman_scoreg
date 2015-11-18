@@ -92,9 +92,10 @@ scoreg.loadMembers(function(scoutIds) {
 
   function loadMemberJobs(scoutId) {
     scoreg.loadMemberData(scoutId, function(memberData) {
+      var mailcheck = /^([\w-]+(?:\.[\w-]+)*)@((?:[\w-]+\.)*\w[\w-]{0,66})\.([a-z]{2,6}(?:\.[a-z]{2})?)$/i;
       if(memberData.memberJobList && memberData.memberJobList.memberJob &&
          memberData.scoutState === 'MEMBER_FULL' && memberData.emailPrimary &&
-         memberData.emailPrimary !== '') {
+         mailcheck.test(memberData.emailPrimary)) {
         var memberJobs = scoreg.getActiveMemberJobs(memberData);
         if(memberJobs.length > 0) {
           var memberLists = mailman.getListsByJobs(memberJobs);
