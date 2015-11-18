@@ -31,12 +31,25 @@ var mailman = require('./mailman.js');
 
 var subscriptions = [];
 
+global.verbose = false;
+for(var i = 0; i < process.argv.length; i++) {
+  if(process.argv[i] === '-v') {
+    global.verbose = true;
+  }
+}
+
+global.logger = function(message) {
+  if(global.verbose) {
+    console.log(message);
+  }
+};
+
 function allLoaded() {
-  console.log('Loaded ' + subscriptions.length + ' subscriptions from scoreg');
+  global.logger('Loaded ' + subscriptions.length + ' subscriptions from scoreg');
 
   database.compileChanges(subscriptions, function(changes) {
     var curChange = 0;
-    function applyNextChange(retval) {      
+    function applyNextChange(retval) {
       if(retval !== 0) {
         console.log('ERROR: Mailman returned ' + retval);
       }
