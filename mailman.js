@@ -47,7 +47,7 @@ module.exports = (function() {
    */
   var addAddressToList = function(list, address, callback) {
     global.logger('subscribing ' + address + ' to ' + list);
-    var mm = child.spawn('/usr/lib/mailman/bin/add_members', ['-q', '-r', '-', list]);
+    var mm = child.spawn('/usr/lib/mailman/bin/add_members', ['-r', '-', list]);
     mm.stdout.pipe(process.stdout);
     mm.stderr.pipe(process.stdout);
     mm.stdin.write(address);
@@ -66,7 +66,7 @@ module.exports = (function() {
    */
   var removeAddressFromList = function(list, address, callback) {
     global.logger('unsubscribing ' + address + ' from ' + list);
-    var mm = child.spawn('/usr/lib/mailman/bin/remove_members', ['-q', '-f', '-', list]);
+    var mm = child.spawn('/usr/lib/mailman/bin/remove_members', ['-f', '-', list]);
     mm.stdout.pipe(process.stdout);
     mm.stderr.pipe(process.stdout);
     mm.stdin.write(address);
@@ -87,7 +87,7 @@ module.exports = (function() {
    */
   var updateAddress = function(list, oldAddress, newAddress, callback) {
     global.logger('changing ' + oldAddress + ' to ' + newAddress + ' in ' + list);
-    var mm = child.spawn('/usr/lib/mailman/bin/clone_member', ['-q', '-r', '-l', list, oldAddress, newAddress]);
+    var mm = child.spawn('/usr/lib/mailman/bin/clone_member', ['-r', '-l', list, oldAddress, newAddress]);
     mm.stdout.pipe(process.stdout);
     mm.stderr.pipe(process.stdout);
     mm.stdin.end();
