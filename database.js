@@ -26,6 +26,19 @@
 'use strict';
 
 module.exports = (function() {
+  /**
+   * @callback compileChangesCallback
+   * @param {Array} changes
+   *   List with all changes that need to be applied to mailman
+   */
+
+  /**
+   * Check all subscriptions agains the database, compile a list of changes
+   * that need to be applied to mailman and update the database
+   *
+   * @param {Object} subscription
+   * @param {compileChanges} callback
+   */
   function compileChanges(subscriptions, callback) {
     var sqlite = require('sqlite3');
 
@@ -56,6 +69,12 @@ module.exports = (function() {
       subscriptions.forEach(processSubscription);
     });
 
+    /**
+     * Add 'subscribe' action to changes array
+     *
+     * @param {string} list
+     * @param {string} mail
+     */
     function sub(list, mail) {
       changes.push({
         action: 'subscribe',
@@ -64,6 +83,12 @@ module.exports = (function() {
       });
     }
 
+    /**
+     * Add 'unsubscribe' action to changes array
+     *
+     * @param {string} list
+     * @param {string} mail
+     */
     function unsub(list, mail) {
       changes.push({
         action: 'unsubscribe',
@@ -72,6 +97,13 @@ module.exports = (function() {
       });
     }
 
+    /**
+     * Add 'update' action to changes array
+     *
+     * @param {string} list
+     * @param {string} oldMail
+     * @param {string} newMail
+     */
     function change(list, oldMail, newMail) {
       changes.push({
         action: 'update',
@@ -81,6 +113,11 @@ module.exports = (function() {
       });
     }
 
+    /**
+     * Check which members have been subscribed to mailing lists according to
+     * database and are no longer subscribed acording to scoreg.
+     * add unsubscribe action for each of them
+     */
     function purgeDeletedMembers() {
       var allScoutIds = [];
       var processedPurges = 0;
@@ -128,6 +165,14 @@ module.exports = (function() {
       });
     }
 
+    /**
+     * Check subscription loaded from scoreg agains the database,
+     * check if the email has changed or is unknown. set flags in subscription
+     * object and update the database
+     *
+     * @param {Object} subscription
+     * @param {Function} callback
+     */
     function checkMemberDbState(subscription, callback) {
       queryFindMember.all(subscription.scoutId, function (err, memberRows) {
         if(err) {
@@ -153,6 +198,12 @@ module.exports = (function() {
       });
     }
 
+    /**
+     * Check subscription loaded from scoreg agains the database, check which
+     * mailing lists are different and push actions to the changes array
+     *
+     * @param {Object} subscription
+     */
     function processSubscription(subscription) {
       checkMemberDbState(subscription, function() {
         queryFindSubscription.all(subscription.scoutId, function(err, rows) {

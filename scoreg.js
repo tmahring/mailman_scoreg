@@ -28,6 +28,17 @@ module.exports = (function() {
   var request = require('request');
   var settings = require('./settings.js');
 
+  /**
+   * @callback loadMembersCallback
+   * @param {Array} data
+   *   List with all ScoutIds
+   */
+
+  /**
+   * Retrieves all scoutIds
+   *
+   * @param {mailmanCallback} callback
+   */
   var loadMembers = function(callback) {
     request({
       url: settings.api.baseUrl + '/member/findScoutIdsForOrganization/' +
@@ -45,6 +56,16 @@ module.exports = (function() {
     });
   };
 
+  /**
+   * @callback loadMemberDataCallback
+   * @param {Object} data
+   */
+
+  /**
+   * Loads MemberComplete data from scoreg
+   * @param {string} scoutId
+   * @param {loadMemberDataCallback} callback
+   */
   var loadMemberData = function(scoutId, callback) {
     request({
       url: settings.api.baseUrl + '/member/findMemberCompleteByScoutId/' +
@@ -64,6 +85,11 @@ module.exports = (function() {
     });
   };
 
+  /**
+   * Checks if a Member's Job is currently active
+   * @param {Object} job
+   * @return {boolean}
+   */
   function jobIsActive(job) {
     var nowDate = new Date();
     if(job.startDate) {
@@ -81,6 +107,11 @@ module.exports = (function() {
     return true;
   }
 
+  /**
+   * Extracts active jobs from MemberComplete data
+   * @param {Object} memberData
+   * @return {Array}
+   */
   var getActiveMemberJobs = function(memberData) {
     var activeJobs = [];
     for(var i = 0; i < memberData.memberJobList.memberJob.length; i++) {

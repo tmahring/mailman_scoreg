@@ -1,8 +1,11 @@
 /**
  * @file
  * entry point
- * loads member data from scoreg and updates mailman lists according to
- * memberjobs.
+ * This software manages mailman mailing lists using data from the scoreg
+ * registration service. Members are added to mailing lists according to
+ * their MemberJobs in scoreg, using regular expressions defined in setting.js
+ * all subscriptions are stored via sqlit in members.db and only changes are
+ * applied to mailman.
  *
  * @author
  * Thomas Mahringer (tmahring@tmweb.at)
@@ -44,6 +47,10 @@ global.logger = function(message) {
   }
 };
 
+/*
+ * Called once all members have been loaded from scoreg, checks them agains the
+ * database and apply changes to mailman
+ */
 function allLoaded() {
   global.logger('Loaded ' + subscriptions.length + ' subscriptions from scoreg');
 
@@ -76,6 +83,9 @@ function allLoaded() {
   });
 }
 
+/*
+ * Load Member data from scoreg with a maximum of <limit> concurrent connection
+ */
 scoreg.loadMembers(function(scoutIds) {
   var membersDone = 0;
   var running = 0;
