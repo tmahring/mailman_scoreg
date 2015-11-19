@@ -87,11 +87,15 @@ module.exports = (function() {
    */
   var updateAddress = function(list, oldAddress, newAddress, callback) {
     global.logger('changing ' + oldAddress + ' to ' + newAddress + ' in ' + list);
+    removeAddressFromList(list, oldAddress, function() {
+      addAddressToList(list, newAddress, callback);
+    });
+    /* - clone_member doesn't notify user of change - using sub and unsub instead
     var mm = child.spawn('/usr/lib/mailman/bin/clone_member', ['-r', '-l', list, oldAddress, newAddress]);
     mm.stdout.pipe(process.stdout);
     mm.stderr.pipe(process.stdout);
     mm.stdin.end();
-    mm.on('close', callback);
+    mm.on('close', callback);*/
   };
 
   /**
