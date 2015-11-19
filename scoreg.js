@@ -67,19 +67,22 @@ module.exports = (function() {
    * @param {loadMemberDataCallback} callback
    */
   var loadMemberData = function(scoutId, callback) {
+    console.log(settings.api.baseUrl + '/member/findMemberCompleteByScoutId/' +
+      settings.api.user + '/' + settings.api.password + '/' +
+      settings.api.authOrgId + '/' + settings.api.serviceId + '/' + scoutId);
     request({
       url: settings.api.baseUrl + '/member/findMemberCompleteByScoutId/' +
         settings.api.user + '/' + settings.api.password + '/' +
-        settings.api.authOrgId + '/' + settings.api.serviceId + '/' + scoutId,
+        settings.api.authOrgId + '/' + settings.api.serviceId + '/' + encodeURIComponent(scoutId),
       json: true,
     }, function(error, response, body) {
       if(error) {
         console.log(error);
-        return;
+        callback(null);
       }
       if(!body.MemberComplete) {
         console.log(body);
-        return;
+        callback(null);
       }
       callback(body.MemberComplete);
     });

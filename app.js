@@ -89,8 +89,9 @@ function allLoaded() {
 scoreg.loadMembers(function(scoutIds) {
   var membersDone = 0;
   var running = 0;
-  var limit = 10;
+  var limit = 5;
   var current = 0;
+  console.log(scoutIds.length);
 
   function runRequests() {
     while(running < limit && current < scoutIds.length) {
@@ -102,19 +103,21 @@ scoreg.loadMembers(function(scoutIds) {
 
   function loadMemberJobs(scoutId) {
     scoreg.loadMemberData(scoutId, function(memberData) {
-      var mailcheck = /^([\w-]+(?:\.[\w-]+)*)@((?:[\w-]+\.)*\w[\w-]{0,66})\.([a-z]{2,6}(?:\.[a-z]{2})?)$/i;
-      if(memberData.memberJobList && memberData.memberJobList.memberJob &&
-         memberData.scoutState === 'MEMBER_FULL' && memberData.emailPrimary &&
-         mailcheck.test(memberData.emailPrimary)) {
-        var memberJobs = scoreg.getActiveMemberJobs(memberData);
-        if(memberJobs.length > 0) {
-          var memberLists = mailman.getListsByJobs(memberJobs);
-          if(memberLists.length > 0) {
-            subscriptions.push({
-              scoutId : scoutId,
-              email: memberData.emailPrimary,
-              lists: memberLists,
-            });
+      if(memberData) {
+        var mailcheck = /^([\w-]+(?:\.[\w-]+)*)@((?:[\w-]+\.)*\w[\w-]{0,66})\.([a-z]{2,6}(?:\.[a-z]{2})?)$/i;
+        if(memberData.memberJobList && memberData.memberJobList.memberJob &&
+           memberData.scoutState === 'MEMBER_FULL' && memberData.emailPrimary &&
+           mailcheck.test(memberData.emailPrimary)) {
+          var memberJobs = scoreg.getActiveMemberJobs(memberData);
+          if(memberJobs.length > 0) {
+            var memberLists = mailman.getListsByJobs(memberJobs);
+            if(memberLists.length > 0) {
+              subscriptions.push({
+                scoutId : scoutId,
+                email: memberData.emailPrimary,
+                lists: memberLists,
+              });
+            }
           }
         }
       }
