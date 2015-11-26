@@ -53,7 +53,7 @@ module.exports = (function() {
     password: '<password>',
     authOrgId: '<auth org id>',
     serviceId: '<service id>',
-    baseUrl: 'https://scoreg.at/ScoregWebServer/services/rest'
+    baseUrl: 'http://demo.scoreg.at/ScoregWebServer/services/rest'
   };
 
   return {

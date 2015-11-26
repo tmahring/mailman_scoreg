@@ -48,7 +48,8 @@ module.exports = (function() {
       json: true,
     }, function(error, response, body) {
       if(error) {
-        console.log(error);
+        global.logger.log('ERROR loading scoutid list', global.logger.LOG_ERROR);
+        global.logger.log(error, global.logger.LOG_ERROR);
         return;
       }
 
@@ -67,23 +68,26 @@ module.exports = (function() {
    * @param {loadMemberDataCallback} callback
    */
   var loadMemberData = function(scoutId, callback) {
-    console.log(settings.api.baseUrl + '/member/findMemberCompleteByScoutId/' +
+    var url = settings.api.baseUrl + '/member/findMemberCompleteByScoutId/' +
       settings.api.user + '/' + settings.api.password + '/' +
-      settings.api.authOrgId + '/' + settings.api.serviceId + '/' + scoutId);
+      settings.api.authOrgId + '/' + settings.api.serviceId + '/' + encodeURIComponent(scoutId);
     request({
-      url: settings.api.baseUrl + '/member/findMemberCompleteByScoutId/' +
-        settings.api.user + '/' + settings.api.password + '/' +
-        settings.api.authOrgId + '/' + settings.api.serviceId + '/' + encodeURIComponent(scoutId),
+      url: url,
       json: true,
     }, function(error, response, body) {
-      if(error) {
-        console.log(error);
+      if(error || !body) {
+        global.logger.log('ERROR loading ScoutId ' + scoutId, global.logger.LOG_ERROR);
+        global.logger.log(error, global.logger.LOG_ERROR);
+        global.logger.log('URL: ' + url, global.logger.LOG_ERROR);
         callback(null);
       }
       if(!body.MemberComplete) {
-        console.log(body);
+        global.logger.log('ERROR loading ScoutId ' + scoutId, global.logger.LOG_ERROR);
+        global.logger.log(error, global.logger.LOG_ERROR);
+        global.logger.log('URL: ' + url, global.logger.LOG_ERROR);
         callback(null);
       }
+      global.logger.log('Loaded Data for ScoutId ' + scoutId, global.logger.LOG_DEBUG);
       callback(body.MemberComplete);
     });
   };

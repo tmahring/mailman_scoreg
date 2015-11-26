@@ -4,6 +4,7 @@
   "description": "Update mailman list members based on scoreg jobs",
   "main": "app.js",
   "dependencies": {
+    "node-syslog": "^1.2.0",
     "request": "^2.63.0",
     "sqlite3": "^3.1.0"
   },

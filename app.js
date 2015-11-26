@@ -31,35 +31,46 @@
 var scoreg = require('./scoreg.js');
 var database = require('./database.js');
 var mailman = require('./mailman.js');
+var Syslog = require('node-syslog');
 
 var subscriptions = [];
 
-global.verbose = false;
-for(var i = 0; i < process.argv.length; i++) {
-  if(process.argv[i] === '-v') {
-    global.verbose = true;
+function Logger() {
+  this.LOG_INFO = Syslog.LOG_INFO;
+  this.LOG_WARNING = Syslog.LOG_WARNING;
+  this.LOG_ERROR = Syslog.LOG_ERROR;
+  this.LOG_DEBUG = Syslog.LOG_DEBUG;
+
+  Syslog.init("mailmain-scoreg", Syslog.LOG_PID | Syslog.LOG_ODELAY, Syslog.LOG_LOCAL0);
+  Syslog.log(Syslog.LOG_INFO, 'Initiated new run at ' + new Date());
+
+  for(var i = 0; i < process.argv.length; i++) {
+    if(process.argv[i] === '-v') {
+      this.verbose = true;
+    }
   }
+
+  this.log = function(message, level) {
+    var log_level = level ? level : Syslog.LOG_INFO;
+    if(this.verbose) {
+      console.log(message);
+    }
+    Syslog.log(log_level, message);
+  };
 }
 
-global.logger = function(message) {
-  if(global.verbose) {
-    console.log(message);
-  }
-};
+global.logger = new Logger();
 
 /*
  * Called once all members have been loaded from scoreg, checks them agains the
  * database and apply changes to mailman
  */
 function allLoaded() {
-  global.logger('Loaded ' + subscriptions.length + ' subscriptions from scoreg');
+  global.logger.log('Loaded ' + subscriptions.length + ' subscriptions from scoreg');
 
   database.compileChanges(subscriptions, function(changes) {
     var curChange = 0;
-    function applyNextChange(retval) {
-      if(retval !== 0) {
-        console.log('ERROR: Mailman returned ' + retval);
-      }
+    function applyNextChange() {
       if(curChange < changes.length) {
         switch(changes[curChange].action) {
           case 'subscribe' :
@@ -89,16 +100,28 @@ function allLoaded() {
 scoreg.loadMembers(function(scoutIds) {
   var membersDone = 0;
   var running = 0;
-  var limit = 5;
+  var limit = 10;
   var current = 0;
-  console.log(scoutIds.length);
+  var delay = 2000;
+  var waiting = false;
 
   function runRequests() {
+    if(membersDone === scoutIds.length) {
+      allLoaded();
+    }
+    else if(!waiting && current < scoutIds.length) {
+      waiting = true;
+      setTimeout(startRequestBatch, delay);
+    }
+  }
+
+  function startRequestBatch() {
     while(running < limit && current < scoutIds.length) {
       loadMemberJobs(scoutIds[current]);
       running++;
       current++;
     }
+    waiting = false;
   }
 
   function loadMemberJobs(scoutId) {
@@ -106,31 +129,30 @@ scoreg.loadMembers(function(scoutIds) {
       if(memberData) {
         var mailcheck = /^([\w-]+(?:\.[\w-]+)*)@((?:[\w-]+\.)*\w[\w-]{0,66})\.([a-z]{2,6}(?:\.[a-z]{2})?)$/i;
         if(memberData.memberJobList && memberData.memberJobList.memberJob &&
-           memberData.scoutState === 'MEMBER_FULL' && memberData.emailPrimary &&
-           mailcheck.test(memberData.emailPrimary)) {
-          var memberJobs = scoreg.getActiveMemberJobs(memberData);
-          if(memberJobs.length > 0) {
-            var memberLists = mailman.getListsByJobs(memberJobs);
-            if(memberLists.length > 0) {
-              subscriptions.push({
-                scoutId : scoutId,
-                email: memberData.emailPrimary,
-                lists: memberLists,
-              });
+           memberData.scoutState === 'MEMBER_FULL' && memberData.emailPrimary) {
+          if(mailcheck.test(memberData.emailPrimary)) {
+            var memberJobs = scoreg.getActiveMemberJobs(memberData);
+            if(memberJobs.length > 0) {
+              var memberLists = mailman.getListsByJobs(memberJobs);
+              if(memberLists.length > 0) {
+                subscriptions.push({
+                  scoutId : scoutId,
+                  email: memberData.emailPrimary,
+                  lists: memberLists,
+                });
+              }
             }
+          }
+          else {
+            global.logger.log('Malformed email address: ' + memberData.emailPrimary + ' from ScoutID ' + scoutId, global.logger.LOG_WARNING);
           }
         }
       }
       membersDone++;
       running--;
-      if(membersDone === scoutIds.length) {
-        allLoaded();
-      }
-      else {
-        runRequests();
-      }
+      runRequests();
     });
   }
 
-  runRequests();
+  startRequestBatch();
 });

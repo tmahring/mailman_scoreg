@@ -28,13 +28,22 @@ module.exports = (function() {
   var settings = require('./settings.js');
   var child = require('child_process');
 
-  /**
-   * Callback function after mailman commands are done
-   *
-   * @callback mailmanCallback
-   * @param {number} retval
-   *   Return value of the command
-   */
+  function runMmCmd(cmd, args, address, callback) {
+    var output = '';
+
+    var mm = child.spawn(cmd, args);
+    mm.stdout.on('data', function(data) {
+      output += data;
+    });
+    mm.stderr.on('data', function(data) {
+      output += data;
+    });
+    mm.stdin.write(address);
+    mm.stdin.end();
+    mm.on('close', function(retval) {
+      callback(retval, output);
+    });
+  }
 
   /**
    * Adds an email address to a mailman list
@@ -43,16 +52,19 @@ module.exports = (function() {
    *   Name of the mailinglist.
    * @param {string} address
    *   email address.
-   * @param {mailmanCallback} callback
+   * @param {function} callback
    */
   var addAddressToList = function(list, address, callback) {
-    global.logger('subscribing ' + address + ' to ' + list);
-    var mm = child.spawn('/usr/lib/mailman/bin/add_members', ['-r', '-', list]);
-    mm.stdout.pipe(process.stdout);
-    mm.stderr.pipe(process.stdout);
-    mm.stdin.write(address);
-    mm.stdin.end();
-    mm.on('close', callback);
+    runMmCmd('/usr/lib/mailman/bin/add_members', ['-r', '-', list], address, function(retval, output) {
+      if(('' + output).indexOf('Subscribed: ' + address) !== -1 && retval === 0) {
+        global.logger.log('subscribed ' + address + ' to ' + list, global.logger.LOG_INFO);
+      }
+      else {
+        global.logger.log('Error subscribing ' + address + ' to ' + list, global.logger.LOG_ERROR);
+        global.logger.log(output, global.logger.LOG_DEBUG);
+      }
+      callback();
+    });
   };
 
   /**
@@ -62,16 +74,19 @@ module.exports = (function() {
    *   Name of the mailinglist.
    * @param {string} address
    *   email address.
-   * @param {mailmanCallback} callback
+   * @param {function} callback
    */
   var removeAddressFromList = function(list, address, callback) {
-    global.logger('unsubscribing ' + address + ' from ' + list);
-    var mm = child.spawn('/usr/lib/mailman/bin/remove_members', ['-f', '-', list]);
-    mm.stdout.pipe(process.stdout);
-    mm.stderr.pipe(process.stdout);
-    mm.stdin.write(address);
-    mm.stdin.end();
-    mm.on('close', callback);
+    runMmCmd('/usr/lib/mailman/bin/remove_members', ['-f', '-', list], address, function(retval, output) {
+      if(output === '' && retval === 0) {
+        global.logger.log('unsubscribed ' + address + ' from ' + list, global.logger.LOG_INFO);
+      }
+      else {
+        global.logger.log('Error unsubscribing ' + address + ' from ' + list, global.logger.LOG_ERROR);
+        global.logger.log(output, global.logger.LOG_DEBUG);
+      }
+      callback();
+    });
   };
 
   /**
@@ -83,10 +98,10 @@ module.exports = (function() {
    *   old email address.
    * @param {string} newAddress
    *   new email address.
-   * @param {mailmanCallback} callback
+   * @param {function} callback
    */
   var updateAddress = function(list, oldAddress, newAddress, callback) {
-    global.logger('changing ' + oldAddress + ' to ' + newAddress + ' in ' + list);
+    global.logger.log('changing ' + oldAddress + ' to ' + newAddress + ' in ' + list, global.logger.LOG_INFO);
     removeAddressFromList(list, oldAddress, function() {
       addAddressToList(list, newAddress, callback);
     });

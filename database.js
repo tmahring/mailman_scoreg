@@ -234,7 +234,8 @@ module.exports = (function() {
 
           processedSubscriptions++;
           if(processedSubscriptions === subscriptions.length) {
-            purgeDeletedMembers();
+            // purgeDeletedMembers();
+            callback(changes);
           }
         });
       });
