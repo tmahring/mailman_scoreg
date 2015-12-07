@@ -39,7 +39,7 @@ module.exports = (function() {
    * @param {Object} subscription
    * @param {compileChanges} callback
    */
-  function compileChanges(subscriptions, callback) {
+  function compileChanges(subscriptions, loadedIds, callback) {
     var sqlite = require('sqlite3');
 
     var dbFile = 'members.db';
@@ -150,7 +150,7 @@ module.exports = (function() {
         }
         else {
           for(var iii = 0; iii < allMembers.length; iii++) {
-            if(allScoutIds.indexOf(allMembers[iii].scoutId) === -1) {
+            if(allScoutIds.indexOf(allMembers[iii].scoutId) === -1 && loadedIds.indexOf(allMembers[iii].scoutId) !== -1) {
               queryDeleteMember.run(allMembers[iii].scoutId);
               unsubMember(allMembers[iii], allMembers);
             }
@@ -234,7 +234,7 @@ module.exports = (function() {
 
           processedSubscriptions++;
           if(processedSubscriptions === subscriptions.length) {
-            // purgeDeletedMembers();
+            purgeDeletedMembers();
             callback(changes);
           }
         });

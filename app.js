@@ -34,6 +34,7 @@ var mailman = require('./mailman.js');
 var Syslog = require('node-syslog');
 
 var subscriptions = [];
+var loadedIds = [];
 
 function Logger() {
   this.LOG_INFO = Syslog.LOG_INFO;
@@ -68,7 +69,7 @@ global.logger = new Logger();
 function allLoaded() {
   global.logger.log('Loaded ' + subscriptions.length + ' subscriptions from scoreg');
 
-  database.compileChanges(subscriptions, function(changes) {
+  database.compileChanges(subscriptions, loadedIds, function(changes) {
     var curChange = 0;
     function applyNextChange() {
       if(curChange < changes.length) {
@@ -131,6 +132,7 @@ scoreg.loadMembers(function(scoutIds) {
         if(memberData.memberJobList && memberData.memberJobList.memberJob &&
            memberData.scoutState === 'MEMBER_FULL' && memberData.emailPrimary) {
           if(mailcheck.test(memberData.emailPrimary)) {
+            loadedIds.push(scoutId);
             var memberJobs = scoreg.getActiveMemberJobs(memberData);
             if(memberJobs.length > 0) {
               var memberLists = mailman.getListsByJobs(memberJobs);
