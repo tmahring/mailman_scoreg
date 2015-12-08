@@ -52,6 +52,8 @@ module.exports = (function() {
     },
   ];
 
+  var dbFile = '/var/scoreg/members.db';
+
   var api = {
     user: '<username>',
     password: '<password>',
@@ -63,5 +65,6 @@ module.exports = (function() {
   return {
     api: api,
     lists: lists,
+    dbFile: dbFile,
   };
 }());

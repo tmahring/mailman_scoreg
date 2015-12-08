@@ -42,7 +42,7 @@ module.exports = (function() {
   function compileChanges(subscriptions, loadedIds, callback) {
     var sqlite = require('sqlite3');
 
-    var dbFile = 'members.db';
+    var dbFile = require('./settings.js').dbFile;
     var db = new sqlite.Database(dbFile);
 
     var changes = [];
