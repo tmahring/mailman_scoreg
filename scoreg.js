@@ -49,7 +49,7 @@ module.exports = (function() {
     }, function(error, response, body) {
       if(error) {
         global.logger.log('ERROR loading scoutid list', global.logger.LOG_ERROR);
-        global.logger.log(error, global.logger.LOG_ERROR);
+        global.logger.log(error, global.logger.LOG_DEBUG);
         return;
       }
 
@@ -77,18 +77,20 @@ module.exports = (function() {
     }, function(error, response, body) {
       if(error || !body) {
         global.logger.log('ERROR loading ScoutId ' + scoutId, global.logger.LOG_ERROR);
-        global.logger.log(error, global.logger.LOG_ERROR);
-        global.logger.log('URL: ' + url, global.logger.LOG_ERROR);
+        global.logger.log('error: ' + error, global.logger.LOG_DEBUG);
+        global.logger.log('URL: ' + url, global.logger.LOG_DEBUG);
         callback(null);
       }
-      if(!body.MemberComplete) {
+      else if(!body.MemberComplete) {
         global.logger.log('ERROR loading ScoutId ' + scoutId, global.logger.LOG_ERROR);
-        global.logger.log(error, global.logger.LOG_ERROR);
-        global.logger.log('URL: ' + url, global.logger.LOG_ERROR);
+        global.logger.log(body, global.logger.LOG_DEBUG);
+        global.logger.log('URL: ' + url, global.logger.LOG_DEBUG);
         callback(null);
       }
-      global.logger.log('Loaded Data for ScoutId ' + scoutId, global.logger.LOG_DEBUG);
-      callback(body.MemberComplete);
+      else {
+        global.logger.log('Loaded Data for ScoutId ' + scoutId, global.logger.LOG_DEBUG);
+        callback(body.MemberComplete);
+      }
     });
   };
 
@@ -121,10 +123,17 @@ module.exports = (function() {
    */
   var getActiveMemberJobs = function(memberData) {
     var activeJobs = [];
-    for(var i = 0; i < memberData.memberJobList.memberJob.length; i++) {
-      var job = memberData.memberJobList.memberJob[i];
-      if(jobIsActive(job)) {
-        activeJobs.push(job.jobName);
+    if(memberData.memberJobList.memberJob instanceof Array) {
+      for(var i = 0; i < memberData.memberJobList.memberJob.length; i++) {
+        var job = memberData.memberJobList.memberJob[i];
+        if(jobIsActive(job)) {
+          activeJobs.push(job.jobName);
+        }
+      }
+    }
+    else {
+      if(jobIsActive(memberData.memberJobList.memberJob)) {
+        activeJobs.push(memberData.memberJobList.memberJob.jobName);
       }
     }
     return activeJobs;

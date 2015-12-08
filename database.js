@@ -235,7 +235,6 @@ module.exports = (function() {
           processedSubscriptions++;
           if(processedSubscriptions === subscriptions.length) {
             purgeDeletedMembers();
-            callback(changes);
           }
         });
       });

@@ -35,14 +35,18 @@ var Syslog = require('node-syslog');
 
 var subscriptions = [];
 var loadedIds = [];
+var errIds = [];
+var allData = [];
 
 function Logger() {
   this.LOG_INFO = Syslog.LOG_INFO;
   this.LOG_WARNING = Syslog.LOG_WARNING;
-  this.LOG_ERROR = Syslog.LOG_ERROR;
+  this.LOG_ERROR = Syslog.LOG_ERR;
   this.LOG_DEBUG = Syslog.LOG_DEBUG;
 
-  Syslog.init("mailmain-scoreg", Syslog.LOG_PID | Syslog.LOG_ODELAY, Syslog.LOG_LOCAL0);
+  this.minLvl = this.LOG_INFO;
+
+  Syslog.init("mailman-scoreg", Syslog.LOG_PID | Syslog.LOG_ODELAY, Syslog.LOG_LOCAL0);
   Syslog.log(Syslog.LOG_INFO, 'Initiated new run at ' + new Date());
 
   for(var i = 0; i < process.argv.length; i++) {
@@ -53,10 +57,12 @@ function Logger() {
 
   this.log = function(message, level) {
     var log_level = level ? level : Syslog.LOG_INFO;
-    if(this.verbose) {
-      console.log(message);
+    if(level <= this.minLvl) {
+      if(this.verbose) {
+        console.log(message);
+      }
+      Syslog.log(log_level, message);
     }
-    Syslog.log(log_level, message);
   };
 }
 
@@ -72,45 +78,47 @@ function allLoaded() {
   database.compileChanges(subscriptions, loadedIds, function(changes) {
     var curChange = 0;
     function applyNextChange() {
-      if(curChange < changes.length) {
-        switch(changes[curChange].action) {
+      curChange++;
+      if(curChange <= changes.length) {
+        switch(changes[curChange - 1].action) {
           case 'subscribe' :
-            mailman.addAddressToList(changes[curChange].list,
-              changes[curChange].email, applyNextChange);
+            mailman.addAddressToList(changes[curChange - 1].list,
+              changes[curChange - 1].email, applyNextChange);
             break;
           case 'unsubscribe' :
-            mailman.removeAddressFromList(changes[curChange].list,
-              changes[curChange].email, applyNextChange);
+            mailman.removeAddressFromList(changes[curChange - 1].list,
+              changes[curChange - 1].email, applyNextChange);
             break;
           case 'update':
-            mailman.updateAddress(changes[curChange].list,
-              changes[curChange].oldmail, changes[curChange].newmail,
+            mailman.updateAddress(changes[curChange - 1].list,
+              changes[curChange - 1].oldmail, changes[curChange - 1].newmail,
               applyNextChange);
             break;
         }
-        curChange++;
       }
     }
     applyNextChange(0);
   });
 }
 
+
 /*
  * Load Member data from scoreg with a maximum of <limit> concurrent connection
  */
+
 scoreg.loadMembers(function(scoutIds) {
   var membersDone = 0;
   var running = 0;
   var limit = 10;
   var current = 0;
-  var delay = 2000;
+  var delay = 1000;
   var waiting = false;
 
   function runRequests() {
     if(membersDone === scoutIds.length) {
       allLoaded();
     }
-    else if(!waiting && current < scoutIds.length) {
+    else if(!waiting && current < scoutIds.length && running === 0) {
       waiting = true;
       setTimeout(startRequestBatch, delay);
     }
@@ -118,9 +126,9 @@ scoreg.loadMembers(function(scoutIds) {
 
   function startRequestBatch() {
     while(running < limit && current < scoutIds.length) {
-      loadMemberJobs(scoutIds[current]);
       running++;
       current++;
+      loadMemberJobs(scoutIds[current]);
     }
     waiting = false;
   }
@@ -128,10 +136,12 @@ scoreg.loadMembers(function(scoutIds) {
   function loadMemberJobs(scoutId) {
     scoreg.loadMemberData(scoutId, function(memberData) {
       if(memberData) {
+        allData.push(memberData);
         var mailcheck = /^([\w-]+(?:\.[\w-]+)*)@((?:[\w-]+\.)*\w[\w-]{0,66})\.([a-z]{2,6}(?:\.[a-z]{2})?)$/i;
         if(memberData.memberJobList && memberData.memberJobList.memberJob &&
            memberData.scoutState === 'MEMBER_FULL' && memberData.emailPrimary) {
-          if(mailcheck.test(memberData.emailPrimary)) {
+          var mail = memberData.emailPrimary.replace(/ /g,'');
+          if(mailcheck.test(mail)) {
             loadedIds.push(scoutId);
             var memberJobs = scoreg.getActiveMemberJobs(memberData);
             if(memberJobs.length > 0) {
@@ -139,16 +149,19 @@ scoreg.loadMembers(function(scoutIds) {
               if(memberLists.length > 0) {
                 subscriptions.push({
                   scoutId : scoutId,
-                  email: memberData.emailPrimary,
+                  email: mail,
                   lists: memberLists,
                 });
               }
             }
           }
           else {
-            global.logger.log('Malformed email address: ' + memberData.emailPrimary + ' from ScoutID ' + scoutId, global.logger.LOG_WARNING);
+            global.logger.log('Malformed email address: ' + mail + ' from ScoutID ' + scoutId, global.logger.LOG_WARNING);
           }
         }
+      }
+      else {
+        errIds.push(scoutId);
       }
       membersDone++;
       running--;
@@ -156,5 +169,6 @@ scoreg.loadMembers(function(scoutIds) {
     });
   }
 
+  waiting = true;
   startRequestBatch();
 });
