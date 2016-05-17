@@ -52,14 +52,14 @@ module.exports = (function() {
     },
   ];
 
-  var dbFile = '/var/scoreg/members.db';
+  var dbFile = 'members.db';
 
   var api = {
     user: '<username>',
     password: '<password>',
     authOrgId: '<auth org id>',
     serviceId: '<service id>',
-    baseUrl: 'https://scoreg.at/ScoregWebServer/services/rest'
+    baseUrl: 'https://scoreg.at/ScoregWebServer/services/v1'
   };
 
   return {

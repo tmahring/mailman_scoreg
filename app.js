@@ -57,10 +57,10 @@ function Logger() {
 
   this.log = function(message, level) {
     var log_level = level ? level : Syslog.LOG_INFO;
+    if(this.verbose) {
+      console.log(message);
+    }
     if(level <= this.minLvl) {
-      if(this.verbose) {
-        console.log(message);
-      }
       Syslog.log(log_level, message);
     }
   };
@@ -109,28 +109,20 @@ function allLoaded() {
 scoreg.loadMembers(function(scoutIds) {
   var membersDone = 0;
   var running = 0;
-  var limit = 10;
+  var limit = 5;
   var current = 0;
-  var delay = 1000;
-  var waiting = false;
 
   function runRequests() {
     if(membersDone === scoutIds.length) {
       allLoaded();
     }
-    else if(!waiting && current < scoutIds.length && running === 0) {
-      waiting = true;
-      setTimeout(startRequestBatch, delay);
+    else {
+      while(running < limit && current < scoutIds.length) {
+        loadMemberJobs(scoutIds[current]);
+        running++;
+        current++;
+      }
     }
-  }
-
-  function startRequestBatch() {
-    while(running < limit && current < scoutIds.length) {
-      running++;
-      current++;
-      loadMemberJobs(scoutIds[current]);
-    }
-    waiting = false;
   }
 
   function loadMemberJobs(scoutId) {
@@ -138,7 +130,7 @@ scoreg.loadMembers(function(scoutIds) {
       if(memberData) {
         allData.push(memberData);
         var mailcheck = /^([\w-]+(?:\.[\w-]+)*)@((?:[\w-]+\.)*\w[\w-]{0,66})\.([a-z]{2,6}(?:\.[a-z]{2})?)$/i;
-        if(memberData.memberJobList && memberData.memberJobList.memberJob &&
+        if(memberData.memberJobList &&
            memberData.scoutState === 'MEMBER_FULL' && memberData.emailPrimary) {
           var mail = memberData.emailPrimary.replace(/ /g,'');
           if(mailcheck.test(mail)) {
@@ -147,6 +139,7 @@ scoreg.loadMembers(function(scoutIds) {
             if(memberJobs.length > 0) {
               var memberLists = mailman.getListsByJobs(memberJobs);
               if(memberLists.length > 0) {
+                global.logger.log('Assigned subscription: id:' + scoutId + ' mail:' + mail + ' list:' + memberLists, global.logger.LOG_WARNING);
                 subscriptions.push({
                   scoutId : scoutId,
                   email: mail,
@@ -169,6 +162,5 @@ scoreg.loadMembers(function(scoutIds) {
     });
   }
 
-  waiting = true;
-  startRequestBatch();
+  runRequests();
 });

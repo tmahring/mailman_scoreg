@@ -52,8 +52,7 @@ module.exports = (function() {
         global.logger.log(error, global.logger.LOG_DEBUG);
         return;
       }
-
-      callback(body.ScoutIdList.list);
+      callback(body.list);
     });
   };
 
@@ -81,15 +80,9 @@ module.exports = (function() {
         global.logger.log('URL: ' + url, global.logger.LOG_DEBUG);
         callback(null);
       }
-      else if(!body.MemberComplete) {
-        global.logger.log('ERROR loading ScoutId ' + scoutId, global.logger.LOG_ERROR);
-        global.logger.log(body, global.logger.LOG_DEBUG);
-        global.logger.log('URL: ' + url, global.logger.LOG_DEBUG);
-        callback(null);
-      }
       else {
         global.logger.log('Loaded Data for ScoutId ' + scoutId, global.logger.LOG_DEBUG);
-        callback(body.MemberComplete);
+        callback(body);
       }
     });
   };
@@ -123,17 +116,17 @@ module.exports = (function() {
    */
   var getActiveMemberJobs = function(memberData) {
     var activeJobs = [];
-    if(memberData.memberJobList.memberJob instanceof Array) {
-      for(var i = 0; i < memberData.memberJobList.memberJob.length; i++) {
-        var job = memberData.memberJobList.memberJob[i];
+    if(memberData.memberJobList instanceof Array) {
+      for(var i = 0; i < memberData.memberJobList.length; i++) {
+        var job = memberData.memberJobList[i];
         if(jobIsActive(job)) {
           activeJobs.push(job.jobName);
         }
       }
     }
     else {
-      if(jobIsActive(memberData.memberJobList.memberJob)) {
-        activeJobs.push(memberData.memberJobList.memberJob.jobName);
+      if(jobIsActive(memberData.memberJobList)) {
+        activeJobs.push(memberData.memberJobList.jobName);
       }
     }
     return activeJobs;
