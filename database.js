@@ -122,6 +122,8 @@ module.exports = (function() {
       var allScoutIds = [];
       var processedPurges = 0;
 
+      console.log("Unsubscribing no longer existing members");
+
       function unsubMember(member, allMembers) {
         queryFindSubscription.all(member.scoutId, function(err, rows) {
           if(err) {
@@ -149,14 +151,28 @@ module.exports = (function() {
           console.log(err);
         }
         else {
+          console.log('ALL:', allMembers.length);
+          console.log('ALL IDs:', allScoutIds.length);
+          console.log('ALL loaded IDs:', loadedIds.length);
           for(var iii = 0; iii < allMembers.length; iii++) {
-            if(allScoutIds.indexOf(allMembers[iii].scoutId) === -1 && loadedIds.indexOf(allMembers[iii].scoutId) !== -1) {
+            if(allScoutIds.indexOf(allMembers[iii].scoutId) === -1) {
               queryDeleteMember.run(allMembers[iii].scoutId);
-              unsubMember(allMembers[iii], allMembers);
+              if(allMembers.filter(member => member.email === allMembers[iii].email).length === 1) {
+                console.log('UNSUB:', allMembers[iii].scoutId, allMembers[iii].email);
+                unsubMember(allMembers[iii], allMembers);
+              }
+              else {
+                processedPurges++;
+                if(processedPurges === allMembers.length) {
+                  console.log('foo');
+                  callback(changes);
+                }                
+              }
             }
             else {
               processedPurges++;
               if(processedPurges === allMembers.length) {
+                console.log('foo');
                 callback(changes);
               }
             }
@@ -193,6 +209,7 @@ module.exports = (function() {
             queryInsertMember.run(subscription.scoutId, subscription.email);
             subscription.memberEmailChanged = false;
           }
+          console.log('bar');
           callback();
         }
       });

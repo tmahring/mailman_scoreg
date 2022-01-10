@@ -28,10 +28,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 "use strict";
+
+if (!String.prototype.trim) {
+  String.prototype.trim = function () {
+    return this.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, '');
+  };
+}
+
 var scoreg = require('./scoreg.js');
 var database = require('./database.js');
 var mailman = require('./mailman.js');
-var Syslog = require('node-syslog');
+var Syslog = require('syslog');
 
 var subscriptions = [];
 var loadedIds = [];
@@ -39,6 +46,7 @@ var errIds = [];
 var allData = [];
 
 function Logger() {
+  //var logger = Syslog.createClient(514, 'localhost');
   this.LOG_INFO = Syslog.LOG_INFO;
   this.LOG_WARNING = Syslog.LOG_WARNING;
   this.LOG_ERROR = Syslog.LOG_ERR;
@@ -46,8 +54,8 @@ function Logger() {
 
   this.minLvl = this.LOG_INFO;
 
-  Syslog.init("mailman-scoreg", Syslog.LOG_PID | Syslog.LOG_ODELAY, Syslog.LOG_LOCAL0);
-  Syslog.log(Syslog.LOG_INFO, 'Initiated new run at ' + new Date());
+  //Syslog.init("mailman-scoreg", Syslog.LOG_PID | Syslog.LOG_ODELAY, Syslog.LOG_LOCAL0);
+  //logger.log('Initiated new run at ' + new Date(), Syslog.LOG_INFO);
 
   for(var i = 0; i < process.argv.length; i++) {
     if(process.argv[i] === '-v') {
@@ -61,7 +69,7 @@ function Logger() {
       console.log(message);
     }
     if(level <= this.minLvl) {
-      Syslog.log(log_level, message);
+      //logger.log(message, log_level);
     }
   };
 }

@@ -29,6 +29,10 @@ module.exports = (function() {
   var child = require('child_process');
 
   function runMmCmd(cmd, args, address, callback) {
+    console.log(cmd, args, address);
+    callback();
+    return;
+
     var output = '';
 
     var mm = child.spawn(cmd, args);
@@ -54,7 +58,7 @@ module.exports = (function() {
    *   email address.
    * @param {function} callback
    */
-  var addAddressToList = function(list, address, callback) {
+  var addAddressToList = function(list, address, callback) {    
     runMmCmd('/usr/lib/mailman/bin/add_members', ['-r', '-', list], address, function(retval, output) {
       if(('' + output).indexOf('Subscribed: ' + address) !== -1 && retval === 0) {
         global.logger.log('subscribed ' + address + ' to ' + list, global.logger.LOG_INFO);
@@ -123,6 +127,7 @@ module.exports = (function() {
    *   mailman list names
    */
   var getListsByJobs = function(jobs) {
+    console.log(jobs);
     var lists = [];
     for(var i = 0; i < jobs.length; i++) {
       for(var ii = 0; ii < settings.lists.length; ii++) {

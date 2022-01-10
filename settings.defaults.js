@@ -28,24 +28,40 @@ module.exports = (function() {
   var lists = [
     {
       name: 'biber',
-      match: /(?:AssistentIn|StufenleiterIn) (?:Biber)/i,
+      match: /(?:AssistentIn|StufenleiterIn|Landesbeauftragte\/r) (?:Biber).*/i,
     },
     {
       name: 'wiwoe',
-      match: /(?:AssistentIn|StufenleiterIn) (?:Wichtel|Wölflinge)/i,
+      match: /(?:AssistentIn|StufenleiterIn|Landesbeauftragte\/r) (?:Wichtel|Wölflinge).*/i,
     },
     {
       name: 'gusp',
-      match: /(?:AssistentIn|StufenleiterIn) (?:Guides|Späher)/i,
+      match: /(?:AssistentIn|StufenleiterIn|Landesbeauftragte\/r) (?:Guides|Späher).*/i,
     },
     {
       name: 'caex',
-      match: /(?:AssistentIn|StufenleiterIn) (?:Caravelles|Explorer)/i,
+      match: /(?:AssistentIn|StufenleiterIn|Landesbeauftragte\/r) (?:Caravelles|Explorer).*/i,
     },
     {
       name: 'raro',
-      match: /(?:AssistentIn|StufenleiterIn) (?:Ranger|Rover)/i,
+      match: /(?:AssistentIn|StufenleiterIn|Landesbeauftragte\/r) (?:Ranger|Rover).*/i,
     },
+    {
+      name: 'gl',
+      match: /GruppenleiterIn.*/i,
+    },
+    {
+      name: 'ausbildung',
+      match: /(?:GruppenausbildungsbegleiterIn).*/i,
+    },
+    {
+      name: 'elternrat',
+      match: /(?:Elternratsobmann\/frau|Elternratsmitglied).*/i,
+    },
+    {
+      name: 'jugend',
+      match: /(?:AGECHECKOK).*/i,
+    }
   ];
 
   var api = {

@@ -12,6 +12,7 @@ interface. This is usually achieved by adding the user to the "list" group.
     node app.js [-v]
 
 ## Installation
+* Rename settings.default.js to settings.js and configure scoreg credentials
 ### Prerequirements
 * Node.JS
 * mailman

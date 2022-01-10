@@ -129,6 +129,11 @@ module.exports = (function() {
         activeJobs.push(memberData.memberJobList.jobName);
       }
     }
+    var date_diff = new Date().getTime() - new Date(memberData.birthdate).getTime();
+    var year = 365 * 24 * 3600 * 1000;
+    if(date_diff < 24 * year && date_diff > 16 * year) {
+      activeJobs.push('AGECHECKOK')
+    }
     return activeJobs;
   };
 
